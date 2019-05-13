@@ -185,14 +185,14 @@ pub struct ShaderBlitter<'a> {
 
 impl<'a> Blitter for ShaderBlitter<'a> {
     fn blit_span(&mut self, y: i32, x1: i32, x2: i32) {
-        let dest_row = (y - self.y) * self.dest_stride;
+        let dest_row = (y + self.y) * self.dest_stride;
         let mask_row = y * self.mask_stride;
         let count = (x2 - x1) as usize;
         self.shader.shade_span(x1, y, &mut self.tmp[..], count);
         for i in 0..count {
-            self.dest[(dest_row + x1 - self.x) as usize + i] = over_in(
+            self.dest[(dest_row + x1 + self.x) as usize + i] = over_in(
                 self.tmp[i],
-                self.dest[(dest_row + x1 - self.x) as usize + i],
+                self.dest[(dest_row + x1 + self.x) as usize + i],
                 self.mask[(mask_row + x1) as usize + i] as u32,
             );
         }

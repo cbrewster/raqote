@@ -389,25 +389,27 @@ impl DrawTarget {
         font: &Font,
         point_size: f32,
         text: &str,
-        mut start: Point,
+        position: Point,
         src: &Source,
         options: &DrawOptions,
     ) {
         let mut ids = Vec::new();
         let mut positions = Vec::new();
+        let mut start = Point::zero();
         for c in text.chars() {
             let id = font.glyph_for_char(c).unwrap();
             ids.push(id);
             positions.push(start);
             start += font.advance(id).unwrap() / 96.;
         }
-        self.draw_glyphs(font, point_size, &ids, &positions, src, options);
+        self.draw_glyphs(font, point_size, position, &ids, &positions, src, options);
     }
 
     pub fn draw_glyphs(
         &mut self,
         font: &Font,
         point_size: f32,
+        position: Point,
         ids: &[u32],
         positions: &[Point],
         src: &Source,
@@ -437,7 +439,7 @@ impl DrawTarget {
         /*let mut canvas = Canvas::new(&euclid::Size2D::new(combined_bounds.size.width as u32,
         combined_bounds.size.height as u32), Format::A8);*/
         let mut canvas = Canvas::new(
-            &euclid::Size2D::new(self.width as u32, self.height as u32),
+            &euclid::Size2D::new(combined_bounds.size.width as u32, 1 + combined_bounds.size.height as u32),
             Format::A8,
         );
         for (id, position) in ids.iter().zip(positions.iter()) {
@@ -454,7 +456,7 @@ impl DrawTarget {
         self.composite(
             src,
             &canvas.pixels,
-            intrect(0, 0, canvas.size.width as i32, canvas.size.height as i32),
+            intrect(position.x as i32, position.y as i32, position.x as i32 + canvas.size.width as i32, position.y as i32 + canvas.size.height as i32),
             options.blend_mode,
         );
     }
@@ -525,14 +527,14 @@ impl DrawTarget {
                          mask: Some(clip),
                      }) => {
                     scb = ShaderClipBlitter {
-                        x: dest_bounds.min.x,
-                        y: dest_bounds.min.y,
+                        x: rect.min.x,
+                        y: rect.min.y,
                         shader: shader,
                         tmp: vec![0; self.width as usize],
                         dest,
                         dest_stride: dest_bounds.size().width,
                         mask,
-                        mask_stride: self.width,
+                        mask_stride: rect.size().width,
                         clip,
                         clip_stride: self.width,
                     };
@@ -541,14 +543,14 @@ impl DrawTarget {
                 }
                 _ => {
                     sb = ShaderBlitter {
-                        x: dest_bounds.min.x,
-                        y: dest_bounds.min.y,
+                        x: rect.min.x,
+                        y: rect.min.y,
                         shader: &*shader,
                         tmp: vec![0; self.width as usize],
                         dest,
                         dest_stride: dest_bounds.size().width,
                         mask,
-                        mask_stride: self.width,
+                        mask_stride: rect.size().width,
                     };
                     blitter = &mut sb;
                 }
@@ -561,14 +563,14 @@ impl DrawTarget {
                          mask: Some(clip),
                      }) => {
                     scb_blend = ShaderClipBlendBlitter {
-                        x: dest_bounds.min.x,
-                        y: dest_bounds.min.y,
+                        x: rect.min.x,
+                        y: rect.min.y,
                         shader: shader,
                         tmp: vec![0; self.width as usize],
                         dest,
                         dest_stride: dest_bounds.size().width,
                         mask,
-                        mask_stride: self.width,
+                        mask_stride: rect.size().width,
                         clip,
                         clip_stride: self.width,
                         blend_fn
@@ -578,14 +580,14 @@ impl DrawTarget {
                 }
                 _ => {
                     sb_blend = ShaderBlendBlitter {
-                        x: dest_bounds.min.x,
-                        y: dest_bounds.min.y,
+                        x: rect.min.x,
+                        y: rect.min.y,
                         shader: &*shader,
                         tmp: vec![0; self.width as usize],
                         dest,
                         dest_stride: dest_bounds.size().width,
                         mask,
-                        mask_stride: self.width,
+                        mask_stride: rect.size().width,
                         blend_fn
                     };
                     blitter = &mut sb_blend;
@@ -593,7 +595,7 @@ impl DrawTarget {
             }
         }
 
-        for y in rect.min.y..rect.max.y {
+        for y in 0..rect.size().height {
             blitter.blit_span(y, rect.min.x, rect.max.x);
         }
     }
