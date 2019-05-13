@@ -418,7 +418,7 @@ impl DrawTarget {
             let bounds = font.raster_bounds(
                 *id,
                 point_size,
-                position,
+                &Point::new(position.x, self.height as f32 - position.y),
                 HintingOptions::None,
                 RasterizationOptions::GrayscaleAa,
             );
@@ -445,7 +445,7 @@ impl DrawTarget {
                 &mut canvas,
                 *id,
                 point_size,
-                position,
+                &Point::new(position.x, self.height as f32 - position.y),
                 HintingOptions::None,
                 RasterizationOptions::GrayscaleAa,
             ).unwrap();
