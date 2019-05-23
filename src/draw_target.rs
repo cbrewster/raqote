@@ -114,7 +114,7 @@ impl<'a> Source<'a> {
         // Linear gradients go from (0, 0) to (1, 0), this may change
         let scale = Transform::create_scale(length, length);
         // Rotate gradient to desired angle
-        let rotation = Transform::create_rotation(gradient_vector.angle_from_x_axis());
+        let rotation = Transform::create_rotation(-gradient_vector.angle_from_x_axis());
         // Compute final transform
         let transform = translate.pre_mul(&rotation).pre_mul(&scale).inverse().unwrap();
 
